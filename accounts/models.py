@@ -12,10 +12,15 @@ class UserBankAccount(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_TYPE)
     initial_deposite_date = models.DateField(auto_now_add=True)
     balance = models.DecimalField(default=0, max_digits=12, decimal_places=2) #ekjon user 12 digit onker taka rakhte parbe, r dui dosomik porjonto rakhte parba 1000.50 eikhane 1000.508 hobe na
-
+    def __str__(self):
+        return str(self.account_no)
+    
 class UserAddress(models.Model):
     user = models.OneToOneField(User, related_name='address', on_delete=models.CASCADE)
     street_address = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
     postal_code = models.IntegerField()
     country = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.user.email
