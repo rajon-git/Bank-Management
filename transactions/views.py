@@ -1,7 +1,7 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Transaction
 from .forms import DepositeForm, WithDrawForm, LoanRequestForm
@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from datetime import datetime
 from django.db import Sum
+from django.shortcuts import render, get_object_or_404, redirect
 
 # Create your views here.
 
@@ -117,3 +118,32 @@ class TransactionReportView(LoginRequiredMixin, ListView):
             'account' : self.request.user.account
         })
         return context
+    
+class PayLoanView(LoginRequiredMixin, View):
+    def get(self,request, loan_id):
+        loan = get_object_or_404(Transaction, id = loan_id)
+
+        if loan.loan_approve:
+            user_account = loan.account
+            if loan.amount < user_account.balance:
+                user_account.balance -= loan.amount
+                loan.balance_after_transacetion = user_account.balance
+                user_account.save()
+                loan.transaction_type = LOAN_PAID
+                loan.save()
+                return redirect('')
+            else:
+                messages.error(self.request, f"Loan amount is grater than available balance")
+                return redirect('')
+            
+
+class LoanListView(LoginRequiredMixin, ListView):
+    model = Transaction
+    template_name= ""
+    context_object_name = 'loans'
+
+    def get_queryset(self):
+        user_account = self.request.user.account
+        queryset = Transaction.objects.filter(account = user_account, transaction_type = LOAN)
+        return queryset
+    
